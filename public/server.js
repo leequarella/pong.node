@@ -13,9 +13,21 @@
 
   app.use(express.bodyParser());
 
-  app.set('views', __dirname + '/views');
-
-  app.use(express.static(__dirname + '/views'));
+  app.configure(function() {
+    app.set('views', __dirname + '/views');
+    app.use(express.static(__dirname + '/views'));
+    app.use(app.router);
+    app.set("view options", {
+      layout: false
+    });
+    return app.register('.html', {
+      compile: function(str, options) {
+        return function(locals) {
+          return str;
+        };
+      }
+    });
+  });
 
   Clients = require("./javascripts/clients").Clients;
 
@@ -44,18 +56,13 @@
   });
 
   app.get('/pong', function(req, res) {
-    res.sendfile("pong.html");
-    return Logger.info("!! PONG GET REQUEST RECEIVED !!");
+    Logger.info("!! PONG GET REQUEST RECEIVED !!");
+    return res.render("pong.html");
   });
 
   app.get('/pong/javascripts/:file', function(req, res) {
-    res.sendfile("javascripts/" + req.params.file);
-    return Logger.info("!! PONG GET REQUEST RECEIVED !!");
-  });
-
-  app.get('/javascripts/:file', function(req, res) {
-    res.sendfile("javascripts/" + req.params.file);
-    return Logger.info("!! JAVASCRIPT GET REQUEST RECEIVED !!");
+    Logger.info("!! PONG JAVASCRIPT GET REQUEST RECEIVED !! " + req.params.file);
+    return res.sendfile('public/javascripts/' + req.params.file);
   });
 
   app.post('/', function(req, res) {

@@ -8,8 +8,13 @@ io = require('socket.io').listen(app)
 app.listen port
 app.use express.bodyParser()
 
-app.set('views', __dirname + '/views')
-app.use express.static(__dirname + '/views')
+app.configure () ->
+  app.set('views', __dirname + '/views')
+  app.use express.static(__dirname + '/views')
+  app.use app.router
+  app.set("view options", {layout: false})
+
+  app.register '.html', compile: (str, options) -> return (locals) -> return str
 
 Clients = require("./javascripts/clients").Clients
 Clients = new Clients
@@ -30,16 +35,12 @@ app.get '/', (req, res) ->
     io.sockets.in(req.body.channel).emit(req.body.message_type, { message: req.body.message })
 
 app.get '/pong', (req, res) ->
-  res.sendfile("pong.html")
   Logger.info "!! PONG GET REQUEST RECEIVED !!"
+  res.render("pong.html")
 
 app.get '/pong/javascripts/:file', (req, res) ->
-  res.sendfile("javascripts/" + req.params.file)
-  Logger.info "!! PONG GET REQUEST RECEIVED !!"
-
-app.get '/javascripts/:file', (req, res) ->
-  res.sendfile("javascripts/" + req.params.file)
-  Logger.info "!! JAVASCRIPT GET REQUEST RECEIVED !!"
+  Logger.info "!! PONG JAVASCRIPT GET REQUEST RECEIVED !! " +  req.params.file
+  res.sendfile('public/javascripts/' + req.params.file)
 
 app.post '/', (req, res) ->
   # First checks to make sure the request has the proper credentials.
